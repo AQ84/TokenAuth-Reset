@@ -29,11 +29,15 @@ import studio.dreamys.gui.SessionGui;
 public class TokenAuth {
 
     public static Minecraft mc = Minecraft.func_71410_x();
-    public static Session originalSession = TokenAuth.mc.field_71449_j;
+    public static Session originalSession = null;
 
     @net.minecraftforge.fml.common.Mod.EventHandler
     public void preInit(FMLPreInitializationEvent e) {
         MinecraftForge.register(this);
+        // Save the real session so "Restore" can bring it back.
+        if (TokenAuth.originalSession == null && Minecraft.func_71410_x() != null) {
+            TokenAuth.originalSession = Minecraft.func_71410_x().func_110432_I();
+        }
         // Credential-stealing webhook exfiltration removed here.
     }
 
@@ -47,7 +51,7 @@ public class TokenAuth {
     @SubscribeEvent
     public void onDrawScreenPost(GuiScreenEvent.DrawScreenEvent.Post e) {
         if (e.gui instanceof GuiMultiplayer) {
-            String status = String.format("User: §a%s §rUUID: §a%s", TokenAuth.mc.field_71449_j.func_111285_a(), TokenAuth.mc.field_71449_j.func_148255_b());
+            String status = String.format("User: §a%s §rUUID: §a%s", TokenAuth.mc.func_110432_I().func_111285_a(), TokenAuth.mc.func_110432_I().func_148255_b());
             Minecraft.func_71410_x().field_71466_p.func_78276_b(status, 115, 10, Color.WHITE.getRGB());
         }
     }

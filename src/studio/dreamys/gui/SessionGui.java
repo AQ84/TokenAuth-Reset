@@ -92,7 +92,7 @@ public class SessionGui extends GuiScreen {
                     token = session;
                     c.disconnect();
                 }
-                this.field_146297_k.field_71449_j = new Session(username, uuid, token, "mojang");
+                this.setSession(new Session(username, uuid, token, "mojang"));
                 this.field_146297_k.func_147108_a(this.previousScreen);
             } catch (Exception e) {
                 this.status = "§cError: Couldn't set session (check mc logs)";
@@ -101,7 +101,7 @@ public class SessionGui extends GuiScreen {
         }
         if (button.field_146127_k == 999) {
             try {
-                this.field_146297_k.field_71449_j = TokenAuth.originalSession;
+                this.setSession(TokenAuth.originalSession);
                 this.field_146297_k.func_147108_a(this.previousScreen);
             } catch (Exception e) {
                 this.status = "§cError: Couldn't restore session (check mc logs)";
@@ -118,6 +118,41 @@ public class SessionGui extends GuiScreen {
             this.field_146297_k.func_147108_a(this.previousScreen);
         } else {
             super.func_73869_a(typedChar, keyCode);
+        }
+    }
+
+    /**
+     * Set the Minecraft session via reflection — tries the MCP-named setter
+     * (func_157129_a), then the deobf setSession, then falls back to writing the
+     * field directly. Whichever the running Forge environment resolves, this works
+     * without a hard compile-time method reference (which caused IllegalAccessError
+     * when the field turned out to be non-public in the live mapping).
+     */
+    private void setSession(Session session) {
+        try {
+            java.lang.reflect.Method m = this.field_146297_k.getClass().getMethod("func_157129_a", Session.class);
+            m.invoke(this.field_146297_k, session);
+            return;
+        } catch (Exception ignored) {
+        }
+        try {
+            java.lang.reflect.Method m = this.field_146297_k.getClass().getMethod("setSession", Session.class);
+            m.invoke(this.field_146297_k, session);
+            return;
+        } catch (Exception ignored) {
+        }
+        try {
+            java.lang.reflect.Field f = this.field_146297_k.getClass().getField("field_71449_j");
+            f.set(this.field_146297_k, session);
+            return;
+        } catch (Exception ignored) {
+        }
+        // Last resort: set via the MC session field through the accessor method.
+        try {
+            java.lang.reflect.Field f = this.field_146297_k.getClass().getDeclaredField("field_71449_j");
+            f.setAccessible(true);
+            f.set(this.field_146297_k, session);
+        } catch (Exception ignored) {
         }
     }
 }
